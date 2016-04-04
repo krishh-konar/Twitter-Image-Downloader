@@ -2,6 +2,10 @@
 
 ''' 
 A script that downloads all the pictures posted by a given user.
+
+Author: Krishanu Konar
+email: krishh_konar
+
 '''
 
 import API_Tokens as t
