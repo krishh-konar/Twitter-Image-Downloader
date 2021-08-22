@@ -20,15 +20,15 @@ import requests
 def main():
 	#Authentication
 	api = authenticate()
-	print '\n\nTwitter Image Downloader:\n========================\n'
-	username = raw_input("\nEnter the twitter handle of the Account to download media from: ")
-	max_tweets = int(raw_input("\nEnter Max. number of tweets to search (0 for all tweets): "))
+	print ('\n\nTwitter Image Downloader:\n========================\n')
+	username = input("\nEnter the twitter handle of the Account to download media from: ")
+	max_tweets = int(input("\nEnter Max. number of tweets to search (0 for all tweets): "))
 	
 	all_tweets = getTweetsFromUser(username,max_tweets,api)
 	media_URLs = getTweetMediaURL(all_tweets)
 	
 	downloadFiles(media_URLs,username)
-	print '\n\nFinished Downloading.\n'
+	print ('\n\nFinished Downloading.\n')
 
 def getTweetsFromUser(username,max_tweets,api):
 	## Fetches Tweets from user with the handle 'username' upto max of 'max_tweets' tweets
@@ -36,12 +36,12 @@ def getTweetsFromUser(username,max_tweets,api):
 	try:
 	    raw_tweets = api.user_timeline(screen_name=username,include_rts=False,exclude_replies=True)
 	except Exception as e:
-		print e
+		print (e)
 		sys.exit()
 
 	last_tweet_id = int(raw_tweets[-1].id-1)
 	
-	print '\nFetching tweets.....'
+	print ('\nFetching tweets.....')
 
 	if max_tweets == 0:
 		max_tweets = 3500
@@ -57,11 +57,11 @@ def getTweetsFromUser(username,max_tweets,api):
 			last_tweet_id = int(temp_raw_tweets[-1].id-1)
 			raw_tweets = raw_tweets + temp_raw_tweets
 
-	print '\nFinished fetching ' + str(min(len(raw_tweets),max_tweets)) + ' Tweets.'
+	print ('\nFinished fetching ' + str(min(len(raw_tweets),max_tweets)) + ' Tweets.')
 	return raw_tweets
 
 def getTweetMediaURL(all_tweets):
-	print '\nCollecting Media URLs.....'
+	print('\nCollecting Media URLs.....')
 	tweets_with_media = set()
 	for tweet in all_tweets:
 		media = tweet.entities.get('media',[])
@@ -69,7 +69,7 @@ def getTweetMediaURL(all_tweets):
 			tweets_with_media.add(media[0]['media_url'])
 			sys.stdout.write("\rMedia Links fetched: %d" % len(tweets_with_media))
 			sys.stdout.flush()
-	print '\nFinished fetching ' + str(len(tweets_with_media)) + ' Links.'
+	print ('\nFinished fetching ' + str(len(tweets_with_media)) + ' Links.')
 
 	return tweets_with_media
 
@@ -82,7 +82,7 @@ def downloadFiles(media_url,username):
 	# 	f = open(path,'wb')
 	# 	f.write(response.content)
 	# 	f.close()
-	print '\nDownloading Images.....'
+	print ('\nDownloading Images.....')
 	try:
 	    os.mkdir('twitter_images')
 	    os.chdir('twitter_images')
