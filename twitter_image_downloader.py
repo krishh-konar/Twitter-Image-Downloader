@@ -1,111 +1,116 @@
 #!/usr/bin/python
 
 ''' 
-A script that downloads all the pictures posted by a given user.
+A script that downloads all the pictures posted by a given twitter handle.
 
 Author: Krishanu Konar
-email: krishh_konar
-
+email: krishanukonar@gmail.com
 '''
 
-import API_Tokens as t
-import json
-from tweepy import OAuthHandler, API, Stream
+import API_Tokens as tokens
+from tweepy import OAuth2BearerHandler, API
 import os
 import wget
 import sys
-import requests
-
 
 def main():
-	#Authentication
-	api = authenticate()
-	print ('\n\nTwitter Image Downloader:\n========================\n')
-	username = input("\nEnter the twitter handle of the Account to download media from: ")
-	max_tweets = int(input("\nEnter Max. number of tweets to search (0 for all tweets): "))
-	
-	all_tweets = getTweetsFromUser(username,max_tweets,api)
-	media_URLs = getTweetMediaURL(all_tweets)
-	
-	downloadFiles(media_URLs,username)
-	print ('\n\nFinished Downloading.\n')
+    #Authentication
+    api = authenticate()
 
-def getTweetsFromUser(username,max_tweets,api):
-	## Fetches Tweets from user with the handle 'username' upto max of 'max_tweets' tweets
-	last_tweet_id, num_images = 0,0
-	try:
-	    raw_tweets = api.user_timeline(screen_name=username,include_rts=False,exclude_replies=True)
-	except Exception as e:
-		print (e)
-		sys.exit()
+    print ('\nTwitter Image Downloader:\n========================\n')
+    
+    username = input("\nEnter the twitter handle of the Account to download media from: ")
+    max_tweets = int(input("Enter Max. number of tweets to search (default: 1000): ") or 1000)
+    
+    all_tweets = getTweetsFromUser(api, username, max_tweets)
+    media_URLs = getTweetMediaURL(all_tweets)
+    
+    downloadFiles(media_URLs,username)
+    print('\n\nFinished Downloading.\n')
 
-	last_tweet_id = int(raw_tweets[-1].id-1)
-	
-	print ('\nFetching tweets.....')
+def getTweetsFromUser(api, username, max_tweets=1000):
+    '''
+        Fetches Tweets from user with the handle 'username' 
+        upto max of 'max_tweets' tweets.
+    '''
 
-	if max_tweets == 0:
-		max_tweets = 3500
+    last_tweet_id = 0
 
-	while len(raw_tweets)<max_tweets:
-		sys.stdout.write("\rTweets fetched: %d" % len(raw_tweets))
-		sys.stdout.flush()
-		temp_raw_tweets = api.user_timeline(screen_name=username, max_id=last_tweet_id, include_rts=False, exclude_replies=True)
+    try:
+        raw_tweets = api.user_timeline(screen_name=username, include_rts=False, exclude_replies=True)
+    except Exception as e:
+        print (e)
+        sys.exit(-1)
 
-		if len(temp_raw_tweets) == 0:
-			break
-		else:
-			last_tweet_id = int(temp_raw_tweets[-1].id-1)
-			raw_tweets = raw_tweets + temp_raw_tweets
+    last_tweet_id = int(raw_tweets[-1].id - 1)
+    
+    print ('\nFetching tweets.....')
 
-	print ('\nFinished fetching ' + str(min(len(raw_tweets),max_tweets)) + ' Tweets.')
-	return raw_tweets
+    while len(raw_tweets) < max_tweets:
+        sys.stdout.write("\rTweets fetched: %d" % len(raw_tweets))
+        sys.stdout.flush()
+
+        tweets = api.user_timeline(screen_name=username, max_id=last_tweet_id, \
+                    include_rts=False, exclude_replies=True)
+
+        if len(tweets) == 0:
+            break
+
+        else:
+            last_tweet_id = int(tweets[-1].id - 1)
+            raw_tweets = raw_tweets + tweets
+
+    print ('\nFinished fetching ' + str(min(len(raw_tweets),max_tweets)) + ' Tweets.')
+    return raw_tweets
 
 def getTweetMediaURL(all_tweets):
-	print('\nCollecting Media URLs.....')
-	tweets_with_media = set()
-	for tweet in all_tweets:
-		media = tweet.entities.get('media',[])
-		if (len(media)>0):
-			tweets_with_media.add(media[0]['media_url'])
-			sys.stdout.write("\rMedia Links fetched: %d" % len(tweets_with_media))
-			sys.stdout.flush()
-	print ('\nFinished fetching ' + str(len(tweets_with_media)) + ' Links.')
+    '''
+        Fetches the media URLs from downloaded tweets.
+    '''
 
-	return tweets_with_media
+    print('\nCollecting Media URLs.....')
+    tweets_with_media = set()
 
-def downloadFiles(media_url,username):
-	# response = requests.get(url)
+    for tweet in all_tweets:
+        media = tweet.entities.get('media',[])
+        if len(media) > 0:
+            tweets_with_media.add(media[0]['media_url'])
+            sys.stdout.write("\rMedia Links fetched: %d" % len(tweets_with_media))
+            sys.stdout.flush()
 
-	# if response.status_code == 200:
-	# 	filename = url[0:-18]
-	# 	path = "/home/krishh/twitter_media/"+str(counter) + '.jpg'
-	# 	f = open(path,'wb')
-	# 	f.write(response.content)
-	# 	f.close()
-	print ('\nDownloading Images.....')
-	try:
-	    os.mkdir('twitter_images')
-	    os.chdir('twitter_images')
-	except:
-		os.chdir('twitter_images')
+    print ('\nFinished fetching ' + str(len(tweets_with_media)) + ' links.')
 
-	try:
-	    os.mkdir(username)
-	    os.chdir(username)
-	except:
-		os.chdir(username)
+    return tweets_with_media
 
-	for url in media_url:
-		wget.download(url)
+def downloadFiles(media_url, username):
+    '''
+        Downloads the fetched media URLs.
+    '''
+
+    print ('\nDownloading Images.....')
+
+    try:
+        os.mkdir('twitter_images')
+        os.chdir('twitter_images')
+    except:
+        os.chdir('twitter_images')
+
+    try:
+        os.mkdir(username)
+        os.chdir(username)
+    except:
+        os.chdir(username)
+
+    for url in media_url:
+        wget.download(url)
 
 
 def authenticate():
-	''' Authenticate the use of twitter API '''
-	auth = OAuthHandler(t.CONSUMER_KEY, t.CONSUMER_SECRET)
-	auth.set_access_token(t.ACCESS_TOKEN,t.ACCESS_TOKEN_SECRET)
-	api = API(auth)
-	return api
+    ''' Authenticate the use of twitter API '''
+    auth = OAuth2BearerHandler(tokens.BEARER_TOKEN)
+    api = API(auth)
+    return api
 
 
 if __name__ == '__main__':
-	main()
+    main()
