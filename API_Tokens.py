@@ -1,9 +1,11 @@
 '''
- Contains necessary tokens to use twitter's API.
+    Contains necessary tokens to use twitter's API.
 '''
 
-## all the 4 required Tokens
-CONSUMER_KEY = ""
-CONSUMER_SECRET = ""
-ACCESS_TOKEN = ""
-ACCESS_TOKEN_SECRET = ""
+## This script can run with just the BEARER_TOKEN, 
+## other keys can be left blank.
+
+BEARER_TOKEN = ""
+
+API_KEY = ""
+API_KEY_SECRET = ""
