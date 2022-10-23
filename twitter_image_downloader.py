@@ -13,6 +13,13 @@ import os
 import wget
 import sys
 
+MEDIA_FORMATS = {
+    # https://help.twitter.com/en/using-twitter/tweeting-gifs-and-pictures
+    "images": [ "jpg", "jpeg", "png", "webp", "heic" ],
+    "videos": [ "mp4", "m4v", "mov" ],
+    "gifs": [ "gif" ]
+}
+
 def main():
     #Authentication
     api = authenticate()
@@ -21,9 +28,10 @@ def main():
     
     username = input("\nEnter the twitter handle of the Account to download media from: ")
     max_tweets = int(input("Enter Max. number of tweets to search (default: 1000): ") or 1000)
+    media_formats = input("Enter type of media (images/gifs/videos/all) (default: images) ") or "images"
     
     all_tweets = getTweetsFromUser(api, username, max_tweets)
-    media_URLs = getTweetMediaURL(all_tweets)
+    media_URLs = getTweetMediaURL(all_tweets, media_formats)
     
     downloadFiles(media_URLs,username)
     print('\n\nFinished Downloading.\n')
@@ -63,7 +71,7 @@ def getTweetsFromUser(api, username, max_tweets=1000):
     print ('\nFinished fetching ' + str(min(len(raw_tweets),max_tweets)) + ' Tweets.')
     return raw_tweets
 
-def getTweetMediaURL(all_tweets):
+def getTweetMediaURL(all_tweets, media_formats = "images"):
     '''
         Fetches the media URLs from downloaded tweets.
     '''
@@ -74,12 +82,17 @@ def getTweetMediaURL(all_tweets):
     for tweet in all_tweets:
         media = tweet.entities.get('media',[])
         if len(media) > 0:
-            tweets_with_media.add(media[0]['media_url'])
+            # print(media)
+            if media_formats == "all":
+                tweets_with_media.add(media[0]['media_url_https'])
+            else:
+                if media[0]['media_url_https'].split(".")[-1] in MEDIA_FORMATS[media_formats]:
+                    tweets_with_media.add(media[0]['media_url_https'])
+
             sys.stdout.write("\rMedia Links fetched: %d" % len(tweets_with_media))
             sys.stdout.flush()
 
     print ('\nFinished fetching ' + str(len(tweets_with_media)) + ' links.')
-
     return tweets_with_media
 
 def downloadFiles(media_url, username):
