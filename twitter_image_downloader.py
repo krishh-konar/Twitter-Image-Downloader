@@ -47,7 +47,6 @@ def main():
         max_tweets = args.max_tweets or 100
         media_formats = args.type or ["images"]
     
-    print (handle, max_tweets, media_formats)
     all_tweets = getTweetsFromUser(api, handle, max_tweets)
     media_URLs = getTweetMediaURL(all_tweets, media_formats)
     
@@ -130,7 +129,7 @@ def downloadFiles(media_url, handle):
         Downloads the fetched media URLs.
     '''
 
-    print ('\nDownloading Images.....')
+    print ('\nDownloading Media.....')
 
     try:
         os.mkdir('twitter_images')
